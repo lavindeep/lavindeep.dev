@@ -107,45 +107,58 @@
   </main>
 
   <script>
-    // Light cycles: a few lines enter from the edges, turn in 45 or 90 degree steps,
-    // and leave a trail that fades with distance from the head.
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      const GRID = 40, SPEED = 240, TRAIL = 320, COUNT = 3, RGB = '92,225,255';
+    // Light cycles: thin lines enter from the edges, turn in 45 or 90 degree steps,
+    // leave a trail that fades with distance, and steer around the text block.
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    if (!reduceMotion.matches) {
+      reduceMotion.addEventListener('change', () => location.reload());
+
+      const GRID = 40, SPEED = 240, TRAIL = 320, COUNT = 3, PAD = 32, RGB = '92,225,255';
       const R = Math.SQRT1_2;
       const DIRS = [[1, 0], [R, R], [0, 1], [-R, R], [-1, 0], [-R, -R], [0, -1], [R, -R]];
       const canvas = document.querySelector('canvas');
       const ctx = canvas.getContext('2d');
       const main = document.querySelector('main');
-      let W, H, zone;
+      let W, H, zone, active;
 
       function resize() {
         const dpr = Math.min(devicePixelRatio || 1, 2);
         W = innerWidth; H = innerHeight;
         canvas.width = W * dpr; canvas.height = H * dpr;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        const r = main.getBoundingClientRect(), pad = 32;
-        zone = { l: r.left - pad, r: r.right + pad, t: r.top - pad, b: r.bottom + pad };
+        const r = main.getBoundingClientRect();
+        zone = { l: r.left - PAD, r: r.right + PAD, t: r.top - PAD, b: r.bottom + PAD };
+        // Idle when the text leaves less than four cells of room on every side.
+        active = Math.max(zone.l, W - zone.r, zone.t, H - zone.b) >= GRID * 4;
       }
 
-      // Keep the head out of the text block. A direction is clear if the next half cell and full cell stay outside.
       const inZone = (x, y) => x > zone.l && x < zone.r && y > zone.t && y < zone.b;
+      const runLength = () => GRID * (2 + Math.floor(Math.random() * 6));
+
+      // A heading is clear if the next half cell and full cell stay outside the text zone.
       function clear(c, d) {
         const [dx, dy] = DIRS[d];
         return !inZone(c.x + dx * GRID / 2, c.y + dy * GRID / 2) && !inZone(c.x + dx * GRID, c.y + dy * GRID);
       }
-      function turn(c, options) {
-        const ok = options.map(t => (c.d + t) % 8).filter(d => clear(c, d));
+
+      // Pick a new heading from the offered turns, keeping only clear ones.
+      // Reverse if none are clear, or respawn if already inside the zone.
+      function turn(c, offsets) {
+        const ok = offsets.map(o => (c.d + o) % 8).filter(d => clear(c, d));
+        if (!ok.length && inZone(c.x, c.y)) return Object.assign(c, spawn());
         c.corners.push({ x: c.x, y: c.y });
         c.d = ok.length ? ok[Math.floor(Math.random() * ok.length)] : (c.d + 4) % 8;
         c.untilTurn = runLength();
       }
 
-      const runLength = () => GRID * (2 + Math.floor(Math.random() * 6));
-
+      // Start on a random edge outside the zone, heading roughly inward.
       function spawn() {
-        const edge = Math.floor(Math.random() * 4);
-        const x = edge === 0 ? 0 : edge === 2 ? W : Math.random() * W;
-        const y = edge === 1 ? 0 : edge === 3 ? H : Math.random() * H;
+        let edge, x, y, tries = 0;
+        do {
+          edge = Math.floor(Math.random() * 4);
+          x = edge === 0 ? 0 : edge === 2 ? W : Math.random() * W;
+          y = edge === 1 ? 0 : edge === 3 ? H : Math.random() * H;
+        } while (inZone(x, y) && ++tries < 20);
         const d = (edge * 2 + [7, 0, 1][Math.floor(Math.random() * 3)]) % 8;
         return { x, y, d, corners: [{ x, y }], untilTurn: runLength(), delay: 1 + Math.random() * 4 };
       }
@@ -162,22 +175,24 @@
         if (c.x < -off || c.x > W + off || c.y < -off || c.y > H + off) Object.assign(c, spawn());
       }
 
+      // Walk back from the head along the corners, fading each segment by distance travelled.
       function draw(c) {
         if (c.delay > 0) return;
         ctx.lineWidth = 1;
-        let remaining = TRAIL;
-        let hx = c.x, hy = c.y;
+        let remaining = TRAIL, hx = c.x, hy = c.y;
         for (let i = c.corners.length - 1; i >= 0 && remaining > 0; i--) {
           const p = c.corners[i];
           const len = Math.hypot(hx - p.x, hy - p.y);
-          const t = Math.min(1, remaining / len);
-          const ex = hx + (p.x - hx) * t, ey = hy + (p.y - hy) * t;
-          const g = ctx.createLinearGradient(hx, hy, ex, ey);
-          g.addColorStop(0, `rgba(${RGB},${remaining / TRAIL})`);
-          g.addColorStop(1, `rgba(${RGB},${Math.max(0, (remaining - len) / TRAIL)})`);
-          ctx.strokeStyle = g;
-          ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
-          remaining -= len;
+          if (len > 0) {
+            const t = Math.min(1, remaining / len);
+            const ex = hx + (p.x - hx) * t, ey = hy + (p.y - hy) * t;
+            const g = ctx.createLinearGradient(hx, hy, ex, ey);
+            g.addColorStop(0, `rgba(${RGB},${remaining / TRAIL})`);
+            g.addColorStop(1, `rgba(${RGB},${Math.max(0, (remaining - len) / TRAIL)})`);
+            ctx.strokeStyle = g;
+            ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
+            remaining -= len;
+          }
           hx = p.x; hy = p.y;
           if (remaining <= 0) c.corners.splice(0, i);
         }
@@ -195,8 +210,10 @@
       (function frame(now) {
         const dt = Math.min((now - last) / 1000, .05);
         last = now;
-        ctx.clearRect(0, 0, W, H);
-        for (const c of cycles) { step(c, dt); draw(c); }
+        if (active) {
+          ctx.clearRect(0, 0, W, H);
+          for (const c of cycles) { step(c, dt); draw(c); }
+        }
         requestAnimationFrame(frame);
       })(last);
     }
