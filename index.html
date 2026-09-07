@@ -12,7 +12,13 @@
       --muted: #7d8590;
       --bg: #0a0d12;
       --accent: #5ce1ff;
-      --cell: 48px;
+      --stroke: #232a33;
+    }
+    /* Registered so the light position can transition instead of snapping. */
+    @property --y {
+      syntax: "<percentage>";
+      inherits: false;
+      initial-value: 50%;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -20,39 +26,64 @@
       margin: 0;
       display: grid;
       place-items: center;
-      text-align: center;
       font: 18px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
       color: var(--fg);
       background: var(--bg);
       overflow: hidden;
     }
 
-    /* Grid drawn twice: a faint base layer, and a bright layer masked to a circle around the cursor. */
-    .grid {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background-image:
-        linear-gradient(to right, var(--line) 1px, transparent 1px),
-        linear-gradient(to bottom, var(--line) 1px, transparent 1px);
-      background-size: var(--cell) var(--cell);
-      background-position: center;
+    .page {
+      width: 100%;
+      max-width: 1100px;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 3rem;
     }
-    .grid.base { --line: rgba(92, 225, 255, .05); }
-    .grid.lit {
-      --line: rgba(92, 225, 255, .45);
-      -webkit-mask-image: radial-gradient(circle 260px at var(--x, 50vw) var(--y, 50vh), #000 0%, transparent 100%);
-      mask-image: radial-gradient(circle 260px at var(--x, 50vw) var(--y, 50vh), #000 0%, transparent 100%);
-    }
-    @media (hover: none) { .grid.lit { display: none; } }
 
-    main { position: relative; padding: 2rem; }
+    main { text-align: left; }
     h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 .25rem; }
     p { margin: 0 0 1.5rem; color: var(--muted); }
     ul { list-style: none; margin: 0; padding: 0; }
-    .social { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 3rem; }
+    .social { display: flex; gap: 1.5rem; margin-bottom: 3rem; }
     h2 { font-size: .8rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 .75rem; }
     .projects li { color: var(--muted); }
+
+    /* Monogram: a dim outline, plus a lit copy masked to a band that tracks the cursor's height. */
+    .mark {
+      position: relative;
+      aspect-ratio: 1;
+      max-height: 80vh;
+      justify-self: end;
+      width: 100%;
+    }
+    .mark svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke-linejoin: miter;
+    }
+    .mark .base { stroke: var(--stroke); stroke-width: 1; }
+    .mark .lit {
+      --y: 50%;
+      transition: --y .5s cubic-bezier(.2, .8, .2, 1);
+      -webkit-mask-image: radial-gradient(70% 28% at 50% var(--y), #000, transparent);
+      mask-image: radial-gradient(70% 28% at 50% var(--y), #000, transparent);
+    }
+    .mark .lit .halo { stroke: var(--accent); stroke-width: 4; opacity: .18; }
+    .mark .lit .line { stroke: var(--accent); stroke-width: 1; }
+
+    /* No cursor: the light drifts up and down on its own. */
+    @media (hover: none) {
+      .mark .lit { animation: sweep 6s ease-in-out infinite; }
+    }
+    @keyframes sweep {
+      0%, 100% { --y: 20%; }
+      50%      { --y: 80%; }
+    }
 
     /* Links: accent underline slides in from the left, text shifts to accent. */
     a {
@@ -75,7 +106,7 @@
     a:hover::after, a:focus-visible::after { transform: scaleX(1); }
 
     /* Staggered fade-up on load. */
-    main > * {
+    main > *, .mark {
       opacity: 0;
       transform: translateY(8px);
       animation: rise .6s ease-out forwards;
@@ -85,44 +116,74 @@
     main > :nth-child(3) { animation-delay: .4s; }
     main > :nth-child(4) { animation-delay: .55s; }
     main > :nth-child(5) { animation-delay: .7s; }
+    .mark { animation-delay: .3s; animation-duration: 1s; }
     @keyframes rise {
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* Narrow screens: stack, center, monogram sits behind the text. */
+    @media (max-width: 720px) {
+      .page { grid-template-columns: 1fr; gap: 0; }
+      main { text-align: center; }
+      .social { justify-content: center; }
+      .mark {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: min(90vw, 90vh);
+        max-height: none;
+        z-index: -1;
+        opacity: .5;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
-      main > * { animation: none; opacity: 1; transform: none; }
+      main > *, .mark { animation: none; opacity: 1; transform: none; }
+      .mark .lit { transition: none; animation: none; }
       a, a::after { transition: none; }
     }
   </style>
 </head>
 <body>
-  <div class="grid base" aria-hidden="true"></div>
-  <div class="grid lit" aria-hidden="true"></div>
-  <main>
-    <h1>Lavindeep</h1>
-    <p>working towards something cool</p>
-    <ul class="social">
-      <li><a href="https://github.com/lavindeep">GitHub</a></li>
-      <li><a href="https://x.com/Genuis_1">X</a></li>
-      <li><a href="https://www.linkedin.com/in/lavindeep-dhillon/">LinkedIn</a></li>
-    </ul>
-    <h2>Projects</h2>
-    <ul class="projects">
-      <li>work in progress ;)</li>
-    </ul>
-  </main>
+  <div class="page">
+    <main>
+      <h1>Lavindeep</h1>
+      <p>working towards something cool</p>
+      <ul class="social">
+        <li><a href="https://github.com/lavindeep">GitHub</a></li>
+        <li><a href="https://x.com/Genuis_1">X</a></li>
+        <li><a href="https://www.linkedin.com/in/lavindeep-dhillon/">LinkedIn</a></li>
+      </ul>
+      <h2>Projects</h2>
+      <ul class="projects">
+        <li>work in progress ;)</li>
+      </ul>
+    </main>
+
+    <div class="mark" aria-hidden="true">
+      <svg class="base" viewBox="0 0 100 100">
+        <path d="M24 6 H42 V74 H82 L88 80 V94 H24 Z" />
+      </svg>
+      <svg class="lit" viewBox="0 0 100 100">
+        <path class="halo" d="M24 6 H42 V74 H82 L88 80 V94 H24 Z" />
+        <path class="line" d="M24 6 H42 V74 H82 L88 80 V94 H24 Z" />
+      </svg>
+    </div>
+  </div>
+
   <script>
-    // Move the mask center to the pointer. Batched to one update per frame.
+    // Light tracks the cursor's height only, as a percentage of the monogram's own box.
     if (matchMedia('(hover: hover)').matches) {
-      const lit = document.querySelector('.grid.lit');
-      let x = 0, y = 0, queued = false;
+      const lit = document.querySelector('.mark .lit');
+      let clientY = 0, queued = false;
       addEventListener('pointermove', e => {
-        x = e.clientX; y = e.clientY;
+        clientY = e.clientY;
         if (queued) return;
         queued = true;
         requestAnimationFrame(() => {
-          lit.style.setProperty('--x', x + 'px');
-          lit.style.setProperty('--y', y + 'px');
+          const r = lit.getBoundingClientRect();
+          const pct = Math.min(100, Math.max(0, (clientY - r.top) / r.height * 100));
+          lit.style.setProperty('--y', pct + '%');
           queued = false;
         });
       }, { passive: true });
