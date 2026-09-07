@@ -1,4 +1,4 @@
-# ddp.dev
+# lavindeep.dev
 
 Personal site. One static HTML file, no build step, no dependencies.
 
@@ -10,4 +10,4 @@ Then open http://localhost:8000.
 
 ## Deploy
 
-Every push to `main` deploys. Custom domain is ddp.dev.
+Every push to `main` deploys. Custom domain is lavindeep.dev.
