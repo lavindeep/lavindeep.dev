@@ -37,11 +37,12 @@
     }
 
     main { position: relative; padding: 2rem; }
-    h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: .04em; margin: 0 0 .25rem; }
-    p { margin: 0 0 1.5rem; color: var(--muted); }
+    h1 { font-size: 2rem; font-weight: 600; letter-spacing: .04em; margin: 0 0 .5rem; }
+    p { margin: 0 0 2rem; color: var(--muted); }
     ul { list-style: none; margin: 0; padding: 0; }
-    .social { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 3rem; }
-    h2 { font-size: .75rem; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin: 0 0 .75rem; }
+    .social { display: flex; justify-content: center; gap: 1.5rem; }
+    hr { width: 2.5rem; margin: 2.5rem auto; border: 0; border-top: 1px solid #2a2a2a; }
+    h2 { font-size: 1rem; font-weight: 600; margin: 0 0 .5rem; }
     .projects li { color: var(--muted); }
 
     /* Links: accent underline slides in from the left, text shifts to accent. */
@@ -75,6 +76,7 @@
     main > :nth-child(3) { animation-delay: .4s; }
     main > :nth-child(4) { animation-delay: .55s; }
     main > :nth-child(5) { animation-delay: .7s; }
+    main > :nth-child(6) { animation-delay: .85s; }
     @keyframes rise {
       to { opacity: 1; transform: translateY(0); }
     }
@@ -96,6 +98,7 @@
       <li><a href="https://x.com/Genuis_1">X</a></li>
       <li><a href="https://www.linkedin.com/in/lavindeep-dhillon/">LinkedIn</a></li>
     </ul>
+    <hr>
     <h2>Projects</h2>
     <ul class="projects">
       <li>work in progress ;)</li>
