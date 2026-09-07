@@ -114,13 +114,29 @@
       const DIRS = [[1, 0], [R, R], [0, 1], [-R, R], [-1, 0], [-R, -R], [0, -1], [R, -R]];
       const canvas = document.querySelector('canvas');
       const ctx = canvas.getContext('2d');
-      let W, H;
+      const main = document.querySelector('main');
+      let W, H, zone;
 
       function resize() {
         const dpr = Math.min(devicePixelRatio || 1, 2);
         W = innerWidth; H = innerHeight;
         canvas.width = W * dpr; canvas.height = H * dpr;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const r = main.getBoundingClientRect(), pad = 32;
+        zone = { l: r.left - pad, r: r.right + pad, t: r.top - pad, b: r.bottom + pad };
+      }
+
+      // Keep the head out of the text block. A direction is clear if the next half cell and full cell stay outside.
+      const inZone = (x, y) => x > zone.l && x < zone.r && y > zone.t && y < zone.b;
+      function clear(c, d) {
+        const [dx, dy] = DIRS[d];
+        return !inZone(c.x + dx * GRID / 2, c.y + dy * GRID / 2) && !inZone(c.x + dx * GRID, c.y + dy * GRID);
+      }
+      function turn(c, options) {
+        const ok = options.map(t => (c.d + t) % 8).filter(d => clear(c, d));
+        c.corners.push({ x: c.x, y: c.y });
+        c.d = ok.length ? ok[Math.floor(Math.random() * ok.length)] : (c.d + 4) % 8;
+        c.untilTurn = runLength();
       }
 
       const runLength = () => GRID * (2 + Math.floor(Math.random() * 6));
@@ -139,12 +155,8 @@
         c.x += DIRS[c.d][0] * dist;
         c.y += DIRS[c.d][1] * dist;
         c.untilTurn -= dist;
-        if (c.untilTurn <= 0) {
-          c.corners.push({ x: c.x, y: c.y });
-          const turn = [1, 2, 6, 7][Math.floor(Math.random() * 4)];
-          c.d = (c.d + turn) % 8;
-          c.untilTurn = runLength();
-        }
+        if (!clear(c, c.d)) turn(c, [1, 2, 3, 5, 6, 7]);
+        else if (c.untilTurn <= 0) turn(c, [1, 2, 6, 7]);
         const off = TRAIL + GRID;
         if (c.x < -off || c.x > W + off || c.y < -off || c.y > H + off) Object.assign(c, spawn());
       }
