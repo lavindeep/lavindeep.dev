@@ -23,9 +23,20 @@
       font: 18px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
       color: var(--fg);
       background: var(--bg);
+      overflow: hidden;
     }
 
-    main { padding: 2rem; }
+    /* Light-cycle trails drawn behind the content. */
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: .55;
+    }
+
+    main { position: relative; padding: 2rem; }
     h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 .25rem; }
     p { margin: 0 0 1.5rem; color: var(--muted); }
     ul { list-style: none; margin: 0; padding: 0; }
@@ -69,12 +80,14 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      canvas { display: none; }
       main > * { animation: none; opacity: 1; transform: none; }
       a, a::after { transition: none; }
     }
   </style>
 </head>
 <body>
+  <canvas aria-hidden="true"></canvas>
   <main>
     <h1>Lavindeep</h1>
     <p>working towards something cool</p>
@@ -88,5 +101,87 @@
       <li>work in progress ;)</li>
     </ul>
   </main>
+
+  <script>
+    // Light cycles: a few lines enter from the edges, turn 90 degrees on a grid,
+    // and leave a trail that fades with distance from the head.
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const GRID = 40, SPEED = 240, TRAIL = 320, COUNT = 3, RGB = '92,225,255';
+      const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+      const canvas = document.querySelector('canvas');
+      const ctx = canvas.getContext('2d');
+      let W, H;
+
+      function resize() {
+        const dpr = Math.min(devicePixelRatio || 1, 2);
+        W = innerWidth; H = innerHeight;
+        canvas.width = W * dpr; canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function spawn() {
+        const d = Math.floor(Math.random() * 4);
+        const snap = n => Math.round(n / GRID) * GRID;
+        const x = d === 0 ? 0 : d === 2 ? W : snap(Math.random() * W);
+        const y = d === 1 ? 0 : d === 3 ? H : snap(Math.random() * H);
+        return { x, y, d, corners: [{ x, y }], untilTurn: GRID * (2 + Math.floor(Math.random() * 6)), delay: 1 + Math.random() * 4 };
+      }
+
+      function step(c, dt) {
+        if (c.delay > 0) { c.delay -= dt; return; }
+        const dist = SPEED * dt;
+        c.x += DIRS[c.d][0] * dist;
+        c.y += DIRS[c.d][1] * dist;
+        c.untilTurn -= dist;
+        if (c.untilTurn <= 0) {
+          c.x = Math.round(c.x / GRID) * GRID;
+          c.y = Math.round(c.y / GRID) * GRID;
+          c.corners.push({ x: c.x, y: c.y });
+          c.d = (c.d + (Math.random() < .5 ? 1 : 3)) % 4;
+          c.untilTurn = GRID * (2 + Math.floor(Math.random() * 6));
+        }
+        const off = TRAIL + GRID;
+        if (c.x < -off || c.x > W + off || c.y < -off || c.y > H + off) Object.assign(c, spawn());
+      }
+
+      function draw(c) {
+        if (c.delay > 0) return;
+        ctx.lineWidth = 1;
+        let remaining = TRAIL;
+        let hx = c.x, hy = c.y;
+        for (let i = c.corners.length - 1; i >= 0 && remaining > 0; i--) {
+          const p = c.corners[i];
+          const len = Math.hypot(hx - p.x, hy - p.y);
+          const t = Math.min(1, remaining / len);
+          const ex = hx + (p.x - hx) * t, ey = hy + (p.y - hy) * t;
+          const g = ctx.createLinearGradient(hx, hy, ex, ey);
+          g.addColorStop(0, `rgba(${RGB},${remaining / TRAIL})`);
+          g.addColorStop(1, `rgba(${RGB},${Math.max(0, (remaining - len) / TRAIL)})`);
+          ctx.strokeStyle = g;
+          ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
+          remaining -= len;
+          hx = p.x; hy = p.y;
+          if (remaining <= 0) c.corners.splice(0, i);
+        }
+        ctx.fillStyle = `rgba(${RGB},1)`;
+        ctx.shadowColor = `rgba(${RGB},.9)`;
+        ctx.shadowBlur = 8;
+        ctx.beginPath(); ctx.arc(c.x, c.y, 1.5, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      resize();
+      addEventListener('resize', resize);
+      const cycles = Array.from({ length: COUNT }, spawn);
+      let last = performance.now();
+      (function frame(now) {
+        const dt = Math.min((now - last) / 1000, .05);
+        last = now;
+        ctx.clearRect(0, 0, W, H);
+        for (const c of cycles) { step(c, dt); draw(c); }
+        requestAnimationFrame(frame);
+      })(last);
+    }
+  </script>
 </body>
 </html>
