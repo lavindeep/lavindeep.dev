@@ -1,6 +1,6 @@
-# lavindeep.dev
+# ddp.dev
 
-Personal site. One static HTML file, no build step.
+Personal site. One static HTML file, no build step, no dependencies.
 
 ## Run locally
 
@@ -10,5 +10,4 @@ Then open http://localhost:8000.
 
 ## Deploy
 
-Push to GitHub and enable Pages (Settings > Pages > Deploy from branch, root).
-Add the custom domain there once the DNS is pointed at GitHub.
+Every push to `main` deploys. Custom domain is ddp.dev.
