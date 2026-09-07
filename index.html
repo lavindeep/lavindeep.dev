@@ -12,6 +12,7 @@
       --muted: #7d8590;
       --bg: #0a0d12;
       --accent: #5ce1ff;
+      --cell: 48px;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -26,29 +27,24 @@
       overflow: hidden;
     }
 
-    /* Blurred accent disc that trails the cursor. Blur gives a smooth falloff with no banding. */
-    .glow {
+    /* Grid drawn twice: a faint base layer, and a bright layer masked to a circle around the cursor. */
+    .grid {
       position: fixed;
-      top: 0; left: 0;
-      width: 40vmax; height: 40vmax;
-      margin: -20vmax 0 0 -20vmax;
-      border-radius: 50%;
-      background: var(--accent);
-      opacity: .14;
-      filter: blur(90px);
+      inset: 0;
       pointer-events: none;
-      transform: translate3d(var(--x, 50vw), var(--y, 50vh), 0);
-      transition: transform .9s cubic-bezier(.2, .8, .2, 1);
-      will-change: transform;
+      background-image:
+        linear-gradient(to right, var(--line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+      background-size: var(--cell) var(--cell);
+      background-position: center;
     }
-    /* No cursor to follow: breathe in place instead. */
-    @media (hover: none) {
-      .glow { animation: breathe 8s ease-in-out infinite; }
+    .grid.base { --line: rgba(92, 225, 255, .05); }
+    .grid.lit {
+      --line: rgba(92, 225, 255, .45);
+      -webkit-mask-image: radial-gradient(circle 260px at var(--x, 50vw) var(--y, 50vh), #000 0%, transparent 100%);
+      mask-image: radial-gradient(circle 260px at var(--x, 50vw) var(--y, 50vh), #000 0%, transparent 100%);
     }
-    @keyframes breathe {
-      0%, 100% { opacity: .1; }
-      50%      { opacity: .18; }
-    }
+    @media (hover: none) { .grid.lit { display: none; } }
 
     main { position: relative; padding: 2rem; }
     h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 .25rem; }
@@ -94,14 +90,14 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .glow { animation: none; transition: none; }
       main > * { animation: none; opacity: 1; transform: none; }
       a, a::after { transition: none; }
     }
   </style>
 </head>
 <body>
-  <div class="glow" aria-hidden="true"></div>
+  <div class="grid base" aria-hidden="true"></div>
+  <div class="grid lit" aria-hidden="true"></div>
   <main>
     <h1>Lavindeep</h1>
     <p>working towards something cool</p>
@@ -116,12 +112,19 @@
     </ul>
   </main>
   <script>
-    // Glow follows the pointer on hover-capable devices. The CSS transition does the easing.
-    if (matchMedia('(hover: hover)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      const glow = document.querySelector('.glow');
+    // Move the mask center to the pointer. Batched to one update per frame.
+    if (matchMedia('(hover: hover)').matches) {
+      const lit = document.querySelector('.grid.lit');
+      let x = 0, y = 0, queued = false;
       addEventListener('pointermove', e => {
-        glow.style.setProperty('--x', e.clientX + 'px');
-        glow.style.setProperty('--y', e.clientY + 'px');
+        x = e.clientX; y = e.clientY;
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(() => {
+          lit.style.setProperty('--x', x + 'px');
+          lit.style.setProperty('--y', y + 'px');
+          queued = false;
+        });
       }, { passive: true });
     }
   </script>
