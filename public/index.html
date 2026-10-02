@@ -136,8 +136,8 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         const r = main.getBoundingClientRect();
         zone = { l: r.left - PAD, r: r.right + PAD, t: r.top - PAD, b: r.bottom + PAD };
-        // Idle when the text leaves less than four cells of room on every side.
-        active = Math.max(zone.l, W - zone.r, zone.t, H - zone.b) >= GRID * 4;
+        // Idle when the text leaves less than two cells of room on every side.
+        active = Math.max(zone.l, W - zone.r, zone.t, H - zone.b) >= GRID * 2;
       }
 
       const inZone = (x, y) => x > zone.l && x < zone.r && y > zone.t && y < zone.b;
