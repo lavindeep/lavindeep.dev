@@ -48,7 +48,9 @@
     .social { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem 1.5rem; }
     hr { width: 2.5rem; margin: 2.5rem auto; border: 0; border-top: 1px solid #2a2a2a; }
     h2 { font-size: 1rem; font-weight: 600; margin: 0 0 .5rem; }
-    .projects li { color: var(--muted); }
+    .projects { margin-bottom: 2rem; }
+    .projects li + li { margin-top: .75rem; }
+    .projects span { display: block; color: var(--muted); font-size: .875rem; }
 
     /* Links: accent underline slides in from the left, text shifts to accent. */
     a {
@@ -82,6 +84,8 @@
     main > :nth-child(4) { animation-delay: .55s; }
     main > :nth-child(5) { animation-delay: .7s; }
     main > :nth-child(6) { animation-delay: .85s; }
+    main > :nth-child(7) { animation-delay: 1s; }
+    main > :nth-child(8) { animation-delay: 1.15s; }
     @keyframes rise {
       to { opacity: 1; transform: translateY(0); }
     }
@@ -100,7 +104,12 @@
     <p>working towards something cool</p>
     <h2>Projects</h2>
     <ul class="projects">
-      <li>work in progress ;)</li>
+      <li><a href="https://github.com/lavindeep/ShellPilot">ShellPilot</a><span>a local AI agent for your terminal, on Ollama</span></li>
+      <li><a href="https://github.com/lavindeep/apex-analog-mapper">Apex Analog Mapper</a><span>Apex Pro key depth as an Xbox controller</span></li>
+    </ul>
+    <h2>Contributions</h2>
+    <ul class="projects">
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=2069768">Firefox</a><span>fixed iCloud Passwords on Apple silicon</span></li>
     </ul>
     <hr>
     <ul class="social">
