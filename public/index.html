@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lavindeep</title>
-  <meta name="description" content="Lavindeep. working towards something cool">
+  <meta name="description" content="Lavindeep">
   <meta name="theme-color" content="#050505">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon.png" sizes="32x32">
@@ -41,14 +41,13 @@
       opacity: .55;
     }
 
-    main { position: relative; width: fit-content; max-width: 100%; padding: 2rem 1.5rem; }
-    h1 { font-size: clamp(1.5rem, 6vw, 2rem); font-weight: 600; letter-spacing: .04em; margin: 0 0 .5rem; }
-    p { margin: 0 0 2rem; color: var(--muted); }
+    main { position: relative; width: fit-content; max-width: 100%; padding: 2rem 1.5rem; text-align: left; }
+    h1 { font-size: clamp(1.5rem, 6vw, 2rem); font-weight: 600; letter-spacing: .04em; margin: 0 0 2rem; }
     ul { list-style: none; margin: 0; padding: 0; }
-    .social { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem 1.5rem; }
-    hr { width: 2.5rem; margin: 2.5rem auto; border: 0; border-top: 1px solid #2a2a2a; }
-    h2 { font-size: 1rem; font-weight: 600; margin: 0 0 .5rem; }
-    .projects li { color: var(--muted); }
+    .social { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; }
+    hr { width: 2.5rem; margin: 2.5rem 0; border: 0; border-top: 1px solid #2a2a2a; }
+    h2 { font-size: .75rem; font-weight: 400; text-transform: uppercase; letter-spacing: .15em; color: var(--muted); margin: 0 0 .5rem; }
+    .projects { margin-bottom: 2rem; }
 
     /* Links: accent underline slides in from the left, text shifts to accent. */
     a {
@@ -82,6 +81,8 @@
     main > :nth-child(4) { animation-delay: .55s; }
     main > :nth-child(5) { animation-delay: .7s; }
     main > :nth-child(6) { animation-delay: .85s; }
+    main > :nth-child(7) { animation-delay: 1s; }
+    main > :nth-child(8) { animation-delay: 1.15s; }
     @keyframes rise {
       to { opacity: 1; transform: translateY(0); }
     }
@@ -97,10 +98,13 @@
   <canvas aria-hidden="true"></canvas>
   <main>
     <h1>Lavindeep</h1>
-    <p>working towards something cool</p>
     <h2>Projects</h2>
     <ul class="projects">
-      <li>work in progress ;)</li>
+      <li><a href="https://github.com/lavindeep/apex-analog-mapper">Apex Analog Mapper</a></li>
+    </ul>
+    <h2>Contributions</h2>
+    <ul class="projects">
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=2069768">Firefox</a></li>
     </ul>
     <hr>
     <ul class="social">
@@ -132,8 +136,8 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         const r = main.getBoundingClientRect();
         zone = { l: r.left - PAD, r: r.right + PAD, t: r.top - PAD, b: r.bottom + PAD };
-        // Idle when the text leaves less than four cells of room on every side.
-        active = Math.max(zone.l, W - zone.r, zone.t, H - zone.b) >= GRID * 4;
+        // Idle when the text leaves less than two cells of room on every side.
+        active = Math.max(zone.l, W - zone.r, zone.t, H - zone.b) >= GRID * 2;
       }
 
       const inZone = (x, y) => x > zone.l && x < zone.r && y > zone.t && y < zone.b;
